@@ -1,0 +1,30 @@
+{% load static %}
+{% block content %}
+<head>
+    <link rel="stylesheet" href="{% static 'css/card.css' %}">
+</head>
+<div class="card">
+    <div class="container" style="display: flex; justify-content: top; align-items: center; height: auto; flex-direction: column;">
+        <div class="well well-large" style="text-align: center; margin-top: 50px;">
+            <h3 style="color: rgb(87, 0, 0);">
+                Aviso e Instruções
+            </h3>
+        </div>
+        <div class="well well-large" style="text-align: center; margin-top: 50px;">
+            <p style="color: rgb(87, 0, 0);">
+                O Mapa Eleitoral Livre está atualmente em fase de desenvolvimento. 
+                Para otimizar sua experiência, recomendamos o uso de filtros por município, 
+                pois a versão atual do software ainda não está totalmente otimizada e o processo de extração pode levar algum tempo.
+            </p>
+            <p style="color: rgb(87, 0, 0);">
+                Após a conclusão da extração, os arquivos serão gerados na pasta do executável com o formato: extraction_aaaammddhhmmss_uf.csv.
+            </p>
+            <p style="color: rgb(87, 0, 0);">
+                Futuras funcionalidades planejadas incluem: 
+                a adição de latitude e longitude para as seções eleitorais, 
+                exibição de gráficos dinâmicos e a possibilidade de realizar extrações para qualquer eleição.
+            </p>            
+        </div>
+    </div>
+</div>
+{% endblock %}
