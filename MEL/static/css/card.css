@@ -1,0 +1,11 @@
+.card {
+    border: 2px solid darkgray; /* Dark gray border */
+    border-radius: 15px; /* Rounded corners */
+    background-color: lightgray; /* Light gray background */
+    padding: 20px;
+    width: 100vh; /* Adjust card width */
+    height: auto;
+    margin: 50px auto; /* Center the card horizontally */
+    text-align: center; /* Center the text inside */
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1); /* Add subtle shadow */
+}

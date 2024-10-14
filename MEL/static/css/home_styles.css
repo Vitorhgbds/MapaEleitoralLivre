@@ -1,0 +1,124 @@
+
+
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 9999;
+}
+
+.loading-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 8px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 8px solid #3498db;
+    width: 60px;
+    height: 60px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+
+/* Set maximum width for form groups */
+.form-group {
+    max-width: 800px; /* Maximum width for each form group */
+        /* Float to the left to ensure they're placed side by side */
+    margin-right: 30px; /* Add some margin between form groups */
+    margin-bottom: 20px; /* Add margin at the bottom */
+    text-align: center; /* Center the text */
+    justify-content: center;
+}
+
+/* Clear floats to ensure proper layout */
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+.btn.active {
+    background-color: #e6c612 ; /* Set background color to green */
+    color: #212529 ; /* Set text color to white */
+}
+/* Custom CSS to style inactive buttons */
+.btn:not(.active) {
+    background-color: #333333 ; /* Set background color to light grey */
+    color: #ffffff; /* Set text color to the default (black) */
+}
+
+.scrollable-div {
+    max-height: 200px; /* Adjust the height as needed */
+    overflow-y: auto;  /* Adds a scrollbar when needed */
+    padding: 15px;     /* Optional, for internal spacing */
+    border: 1px solid #ccc; /* Optional, for visual appearance */
+    border-radius: 5px; /* Optional, for rounded corners */
+    background-color: #f9f9f9; /* Optional, for background color */
+}
+.dropdown-toggle{
+    width: 300px;
+    background-color: #212529;
+    color: #fff;
+}
+
+.basinGroupsUnits{
+    width: 300px; 
+    overflow-y: auto;
+    max-height: 100px;
+    border: 1px solid #ccc;
+}
+label{
+    font-family: sans-serif;
+    text-align: center;
+}
+.row{
+    display: flex;
+    justify-content:space-evenly;
+    text-align: center;
+}
+.btn-group{
+    min-width: 300px;
+    display: flex;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected],
+.select2-container--default .select2-results__option--highlighted[data-selected] {
+    background-color: #2a2a2a; /* Dark background for highlighted option */
+    color: white;
+}
+
+.select2-container--default .select2-results__option[aria-selected="true"],
+.select2-container--default .select2-results__option[data-selected="true"] {
+    background-color: #242424; /* Dark background for selected option */
+    color: white;
+}
+
+.select2-container .select2-selection--single,
+.select2-container .select2-selection--multiple {
+    background-color: #333; /* Dark background for the selection field */
+    color: #333 !important; /* Text color for selected items */
+    border: 1px solid #444; /* Dark border color */
+}
+
+.select2-selection .select2-selection--multiple .select2-selection__rendered .select2-selection__choice{
+    color: #333;
+}
+
+.select2-dropdown {
+    background-color: #333; /* Dark background for dropdown */
+    color: white; /* Text color for dropdown options */
+    border-color: #444; /* Dark border for dropdown */
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow b {
+    border-color: #fff transparent transparent transparent; /* Color of the arrow in the dropdown button */
+}

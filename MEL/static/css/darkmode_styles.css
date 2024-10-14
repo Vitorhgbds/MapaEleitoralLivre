@@ -1,0 +1,71 @@
+/* Main background and text colors for dark mode */
+body {
+    background-color: #121212; /* Dark grey background */
+    color: #e0e0e0; /* Light grey text */
+}
+
+/* Adjusting the colors of headers */
+h1, h2, h3, h4, h5, h6, a, hr {
+    font-family: "Montserrat";
+    font-style:normal;
+    color: #ffffff; /* White text for headers */
+}
+
+/* Additional elements like tables, forms, etc. */
+table, th, td {
+    background-color: #1e1e1e; /* Slightly lighter grey than body */
+    border-color: #333333; /* Dark grey border */
+}
+
+input, textarea {
+    background-color: #333333; /* Dark grey background for inputs */
+    color: #ffffff; /* White text color */
+    border: 1px solid #444444; /* Slightly lighter grey border */
+}
+
+button {
+    background-color: #333333;
+    color: #ffffff;
+    border: 1px solid #444444;
+}
+
+/* Styles for form elements and buttons */
+.form-control {
+    background-color: #333333;
+    color: #ffffff;
+}
+
+.btn-primary {
+    background-color: #e6c612; /* Deep purple */
+    border-color: #a8910d; /* Darker purple */
+    color:#333333;
+}
+.btn-primary:hover{
+    background-color: #a8910d;
+    border-color: #756509; 
+}
+
+.active .checkmark{
+    display: inline !important;
+}
+
+.active .x{
+    display: none !important;
+}
+
+.checkmark{
+    width: 20px;
+    height: 20px;
+    display: none;
+}
+
+.x{
+    width: 20px;
+    height: 20px;
+    display: inline;
+}
+
+.selectable-btn:not(.active){
+    background-color: #808080 !important;
+}
+/* Customize further elements as necessary */
