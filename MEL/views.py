@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
-from .services.download_service import download_base_datasets, find_file_by_substring
+from .services.download_service import find_file_by_substring
 from .services.helper_service import prepare_filters, filter_base_dataframe
 from .services.extractor_service import extract
 import threading
@@ -23,7 +23,7 @@ def basic_view(request):
 def extractor_view(request):
     PAGE = 'index.html'
     
-    DATA_PATH = "DATA"
+    DATA_PATH = "."
     all_candidates_file_sub_str = "candidato"
     all_sections_file_sub_str = "secao"
     
@@ -31,6 +31,7 @@ def extractor_view(request):
     sections_file_path = find_file_by_substring(DATA_PATH, all_sections_file_sub_str)
     
     filters = prepare_filters(sections_file_path)
+    filters["TURNO"] = [1,2]
     
     # Handle form submission with selected filters
     if request.method == "POST":
@@ -46,13 +47,14 @@ def extractor_view(request):
         for filter_name in filters.keys():
             selected_filters[filter_name] = [request.POST.get(filter_name)]
 
+        turno = selected_filters.pop("TURNO", 1)[0]
         # Filter the DataFrame using the selected filters
         filtered_data = filter_base_dataframe(selected_filters, sections_file_path)
         goal = filtered_data.shape[0]
         
         # Call the extract function to fetch candidate data
         # Start the extraction in a background thread
-        extraction_thread = threading.Thread(target=extract, args=(filtered_data, candidates_file_path, progress_callback))
+        extraction_thread = threading.Thread(target=extract, args=(filtered_data, candidates_file_path, progress_callback, turno))
         extraction_thread.start()  # This starts the background thread
 
         data = {
@@ -90,3 +92,7 @@ def get_progress(request):
     global uf
     percentage = int(progress / goal * 100)
     return JsonResponse({"progress": progress, "percentage":percentage, "goal":goal, "uf":uf})
+
+
+def get_base_information(request):
+    pass

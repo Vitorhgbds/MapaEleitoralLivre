@@ -3,18 +3,23 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-
+import threading
 from bs4 import BeautifulSoup
 import time
 import re
 from datetime import datetime
 import pandas as pd
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import os
+
+global progress
+global goal
 
 
 
 
-def extract(base_information_dataframe, base_candidates_path, progress_callback) -> list[dict[str,str]] | None:
+def extract(base_information_dataframe, base_candidates_path, progress_callback, turno) -> list[dict[str,str]] | None:
     if base_information_dataframe.empty:
         return None
     
@@ -25,53 +30,88 @@ def extract(base_information_dataframe, base_candidates_path, progress_callback)
     LAST_URL = "/dados-de-urna/boletim-de-urna"
 
     CD_ELEICAO = base_information_dataframe["CD_ELEICAO"].iloc[0]
+    n_turno = int(CD_ELEICAO) + 1
+        
+    if turno == "todos":
+        CD_ELEICAO = [CD_ELEICAO, n_turno]
+    elif int(turno) > 1:
+        CD_ELEICAO = [n_turno]
+    else:
+        CD_ELEICAO = [CD_ELEICAO]
+        
     SG_UF_LIST = base_information_dataframe["SG_UF"].unique()
     
     base_candidates_df = pd.read_csv(base_candidates_path, encoding='ISO-8859-1',sep=';',dtype=str)
     base_candidates_df_filtered = base_candidates_df[["NM_URNA_CANDIDATO", "NR_CANDIDATO", "CD_MUNICIPIO","DS_CARGO","SG_PARTIDO"]].drop_duplicates()
     
-    goal = base_information_dataframe.shape[0]
+    global goal
+    global progress
+    goal = int(base_information_dataframe.shape[0]) * len(CD_ELEICAO)
     progress = 0
-    driver = fetch_firefox_driver()
-    for uf in SG_UF_LIST:
-        # Filter the DataFrame where 'uf' equals 'SG_UF'
-        filtered_uf_df = base_information_dataframe[base_information_dataframe['SG_UF'] == uf]
-        CD_MU_LIST = filtered_uf_df["CD_MUNICIPIO"].unique()
-        progress_callback(progress, goal, uf)
-        candidates_result = []
-        for cd_mu in CD_MU_LIST:
-            filtered_mu_df = filtered_uf_df[filtered_uf_df['CD_MUNICIPIO'] == cd_mu]
-            ZN_LIST = filtered_mu_df["NR_ZONA"].unique()
-
-            for nr_zona in ZN_LIST:
-                filtered_zn_df = filtered_mu_df[filtered_mu_df['NR_ZONA'] == nr_zona]
-                NS_LIST = filtered_zn_df["NR_SECAO"].unique()
-                
-                
-                for nr_secao in NS_LIST:
-                    filters = f"e=e{CD_ELEICAO};uf={uf.lower()};mu={cd_mu};ufbu={uf.lower()};mubu={cd_mu};zn={nr_zona};se={nr_secao}"
-                    full_url = f"{BASE_URL}{filters}{LAST_URL}"
-                    print(full_url)
-                    
-                    candidates_roles_elements = fetch_candidates_elements(full_url, driver, digit_only_pattern)
-                    candidates = fetch_ballot_box_candidates_information(candidates_roles_elements, nr_secao, nr_zona,cd_mu)
-                    candidates_result.append(candidates)
-                    progress += 1
-                    progress_callback(progress, goal, uf)
+    # Maximum threads based on CPU count
+    max_threads = os.cpu_count()
     
-        flattened_data = [item for sublist in candidates_result for item in sublist]
-        candidates_df = pd.DataFrame(flattened_data)
-        # Get current date and time
-        current_datetime = datetime.now()
-        # Convert to string in the desired format
-        datetime_str = current_datetime.strftime("%Y%m%d%H%M%S")
-        candidates_merged_df = pd.merge(base_candidates_df_filtered,candidates_df, on=["CD_MUNICIPIO","NR_CANDIDATO"],how='inner')
-        candidates_completed = pd.merge(candidates_merged_df, base_information_dataframe, on=['NR_SECAO', 'NR_ZONA','CD_MUNICIPIO'], how='inner')
-        candidates_completed.to_csv(f'extraction_{datetime_str}_{uf}.csv', index=False)
+    for cd_eleicao in CD_ELEICAO:
+        for uf in SG_UF_LIST:
+            # Filter the DataFrame where 'uf' equals 'SG_UF'
+            filtered_uf_df = base_information_dataframe[base_information_dataframe['SG_UF'] == uf]
+            CD_MU_LIST = filtered_uf_df["CD_MUNICIPIO"].unique()
+            progress_callback(progress, goal, uf)
+            candidates_result = []
+            for cd_mu in CD_MU_LIST:
+                filtered_mu_df = filtered_uf_df[filtered_uf_df['CD_MUNICIPIO'] == cd_mu]
+                ZN_LIST = filtered_mu_df["NR_ZONA"].unique()
+
+                # Using ThreadPoolExecutor for concurrent threads
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    futures = [
+                        executor.submit(fetch_zona_information, filtered_mu_df[filtered_mu_df['NR_ZONA'] == nr_zona]["NR_SECAO"].unique(),
+                                        cd_eleicao, uf, cd_mu, nr_zona, progress_callback)
+                        for nr_zona in ZN_LIST
+                    ]
+                    
+                    # Collect results as they complete
+                    for future in as_completed(futures):
+                        candidates_result.extend(future.result())
+                    
+            flattened_data = [item for sublist in candidates_result for item in sublist]
+            candidates_df = pd.DataFrame(flattened_data)
+            # Get current date and time
+            current_datetime = datetime.now()
+            # Convert to string in the desired format
+            datetime_str = current_datetime.strftime("%Y%m%d%H%M%S")
+            candidates_merged_df = pd.merge(base_candidates_df_filtered,candidates_df, on=["CD_MUNICIPIO","NR_CANDIDATO"],how='inner')
+            candidates_completed = pd.merge(candidates_merged_df, base_information_dataframe, on=['NR_SECAO', 'NR_ZONA','CD_MUNICIPIO'], how='inner')
+            candidates_completed["CD_ELEICAO"] = cd_eleicao
+            candidates_completed.to_csv(f'extraction_{datetime_str}_{uf}_e{cd_eleicao}.csv', index=False, sep=";")
         
-    driver.quit() 
+
     return candidates_completed.to_dict(orient="records")
                 
+
+def fetch_zona_information(ns_list, cd_eleicao,uf,cd_mu,nr_zona, progress_callback) -> list[dict[str,str]]:
+    global goal
+    global progress
+    full_name_pattern = r'^\d+\s+[\wÀ-ÖØ-öø-ÿ]+(\s+[\wÀ-ÖØ-öø-ÿ]+)*$'
+    digit_only_pattern = r'^\d+.*$'
+
+    BASE_URL = "https://resultados.tse.jus.br/oficial/app/index.html#/eleicao;"
+    LAST_URL = "/dados-de-urna/boletim-de-urna"
+    driver = fetch_firefox_driver()
+    candidates_result = []
+    for nr_secao in ns_list:
+        filters = f"e=e{cd_eleicao};uf={uf.lower()};mu={cd_mu};ufbu={uf.lower()};mubu={cd_mu};zn={nr_zona};se={nr_secao}"
+        full_url = f"{BASE_URL}{filters}{LAST_URL}"
+        print(full_url)
+        
+        candidates_roles_elements = fetch_candidates_elements(full_url, driver, digit_only_pattern)
+        candidates = fetch_ballot_box_candidates_information(candidates_roles_elements, nr_secao, nr_zona,cd_mu)
+        candidates_result.append(candidates)
+        progress += 1
+        progress_callback(progress, goal, uf)
+    driver.quit() 
+    return candidates_result
+
 
 def fetch_firefox_driver(driver_options = None):
     if not driver_options:
@@ -115,7 +155,7 @@ def wait_for_valid_candidate(driver, candidate_name_pattern):
     WebDriverWait(driver, 5).until(lambda d: has_valid_candidate(d, candidate_name_pattern))
 
 
-def load_ballot_box_page(url: str, driver, candidate_name_pattern, max_retries=3):
+def load_ballot_box_page(url: str, driver, candidate_name_pattern, max_retries=7):
     driver.get(url)
     # Wait for the main element to load (initial load)
     WebDriverWait(driver, 10).until(

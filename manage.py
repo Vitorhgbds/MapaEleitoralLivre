@@ -11,7 +11,7 @@ dataset_links = [SECTION_DETAILS_DATASET_LINK, CANDIDATE_DETAILS_DATASET_LINK]
 section_zip_file_path = "SECTION_DETAILS_DATASET.zip"
 candidate_zip_file_path = "CANDIDATE_DETAILS_DATASET.zip"
 zip_files_path = [section_zip_file_path, candidate_zip_file_path]
-DATA_PATH = "DATA"
+DATA_PATH = "."
 
 all_candidates_file_sub_str = "candidato"
 all_sections_file_sub_str = "secao"
@@ -29,13 +29,7 @@ def main():
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
-    
     # Check if running in a PyInstaller bundle and disable the auto-reloader
-    if getattr(sys, 'frozen', False):
-        sys.argv.append('--noreload')
-        
-    download_base_datasets(dataset_links, zip_files_path, DATA_PATH)
-    
     execute_from_command_line(sys.argv)
 
 
